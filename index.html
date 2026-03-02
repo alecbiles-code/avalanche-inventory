@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Colorado Front Range — SAR Avalanche Inventory</title>
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/pmtiles@3.0.6/dist/pmtiles.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; font-family: 'Helvetica Neue', sans-serif; background: #0a0a0a; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+    #panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(10, 10, 20, 0.92);
+      color: #eee;
+      padding: 18px 20px;
+      border-radius: 10px;
+      width: 290px;
+      z-index: 1;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    #panel h2 {
+      margin: 0 0 4px;
+      font-size: 15px;
+      color: #fff;
+      letter-spacing: 0.3px;
+    }
+
+    #panel .subtitle {
+      font-size: 11px;
+      color: #666;
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+
+    .section-label {
+      font-size: 10px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12px;
+      margin-bottom: 7px;
+      color: #ccc;
+    }
+
+    .legend-swatch {
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      margin: 14px 0;
+    }
+
+    #season-filter {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #season-filter label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #bbb;
+    }
+
+    #season-filter input[type="checkbox"] {
+      accent-color: #ffa500;
+      width: 13px;
+      height: 13px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #bbb;
+      margin-top: 6px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+    }
+
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #333;
+      border-radius: 20px;
+      transition: .3s;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px; width: 14px;
+      left: 3px; bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: .3s;
+    }
+
+    input:checked + .toggle-slider { background-color: #ff4500; }
+    input:checked + .toggle-slider:before { transform: translateX(16px); }
+
+    #stats {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      font-size: 11px;
+      color: #555;
+      line-height: 1.9;
+    }
+
+    #stats span { color: #ddd; font-weight: 600; }
+
+    .maplibregl-popup-content {
+      background: #111827;
+      color: #e5e7eb;
+      border-radius: 8px;
+      padding: 12px 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      font-size: 12px;
+      min-width: 200px;
+    }
+
+    .maplibregl-popup-close-button {
+      color: #9ca3af;
+      font-size: 16px;
+      padding: 4px 8px;
+    }
+
+    .popup-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffa500;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .popup-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 2px 0;
+      color: #9ca3af;
+    }
+
+    .popup-row span:last-child { color: #e5e7eb; font-weight: 500; }
+
+    .confidence-high { color: #4ade80 !important; }
+    .confidence-low  { color: #facc15 !important; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div id="panel">
+    <h2>🏔 SAR Avalanche Inventory</h2>
+    <p class="subtitle">Colorado Front Range · Sentinel-1 amplitude change detection · 2021–2024</p>
+
+    <div class="section-label">Seasonal Detections</div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:#ff4500;"></div>2021–2022
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:#ffa500;"></div>2022–2023
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:#facc15;"></div>2023–2024
+    </div>
+
+    <hr class="divider">
+
+    <div class="section-label">Filter by Season</div>
+    <div id="season-filter">
+      <label><input type="checkbox" value="2021-2022" checked> 2021–2022</label>
+      <label><input type="checkbox" value="2022-2023" checked> 2022–2023</label>
+      <label><input type="checkbox" value="2023-2024" checked> 2023–2024</label>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section-label">Layers</div>
+    <div class="toggle-row">
+      <span>Seasonal detections</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-seasonal" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span>Cross-season hotspots</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-hotspot">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div id="stats">
+      Visible events: <span id="count">–</span><br>
+      Total area: <span id="total-area">–</span> ha<br>
+      Higher confidence: <span id="high-conf">–</span>
+    </div>
+  </div>
+
+  <script>
+    // ── PMTiles protocol ────────────────────────────────────────────────────
+    const protocol = new pmtiles.Protocol();
+    maplibregl.addProtocol('pmtiles', protocol.tile);
+
+    // ── Map init ────────────────────────────────────────────────────────────
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: {
+        version: 8,
+        sources: {
+          'carto-dark': {
+            type: 'raster',
+            tiles: ['https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'],
+            tileSize: 256,
+            attribution: '© CARTO © OpenStreetMap contributors'
+          }
+        },
+        layers: [{ id: 'background', type: 'raster', source: 'carto-dark' }]
+      },
+      center: [-105.78, 40.0],
+      zoom: 9
+    });
+
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+    map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
+
+    // ── Load layers on map ready ────────────────────────────────────────────
+    map.on('load', () => {
+
+      // — Seasonal detections source —
+      map.addSource('avalanches', {
+        type: 'vector',
+        url: 'pmtiles://all_seasons.pmtiles'
+      });
+
+      // Fill
+      map.addLayer({
+        id: 'avalanche-fill',
+        type: 'fill',
+        source: 'avalanches',
+        'source-layer': 'avalanches',
+        paint: {
+          'fill-color': [
+            'match', ['get', 'season'],
+            '2021-2022', '#ff4500',
+            '2022-2023', '#ffa500',
+            '2023-2024', '#facc15',
+            '#ffffff'
+          ],
+          'fill-opacity': [
+            'case',
+            ['==', ['get', 'confidence'], 'higher confidence'], 0.65,
+            0.35
+          ]
+        }
+      });
+
+      // Outline
+      map.addLayer({
+        id: 'avalanche-outline',
+        type: 'line',
+        source: 'avalanches',
+        'source-layer': 'avalanches',
+        paint: {
+          'line-color': '#fff',
+          'line-width': 0.6,
+          'line-opacity': 0.3
+        }
+      });
+
+      // — Cross-season hotspot source —
+      map.addSource('hotspots', {
+        type: 'vector',
+        url: 'pmtiles://cross_season_hotspot.pmtiles'
+      });
+
+      // Hotspot fill — starts hidden
+      map.addLayer({
+        id: 'hotspot-fill',
+        type: 'fill',
+        source: 'hotspots',
+        'source-layer': 'hotspots',
+        layout: { visibility: 'none' },
+        paint: {
+          'fill-color': '#a855f7',
+          'fill-opacity': 0.7
+        }
+      });
+
+      // Hotspot outline
+      map.addLayer({
+        id: 'hotspot-outline',
+        type: 'line',
+        source: 'hotspots',
+        'source-layer': 'hotspots',
+        layout: { visibility: 'none' },
+        paint: {
+          'line-color': '#d8b4fe',
+          'line-width': 1,
+          'line-opacity': 0.6
+        }
+      });
+
+      updateStats();
+    });
+
+    // ── Popup ───────────────────────────────────────────────────────────────
+    const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '280px' });
+
+    function showPopup(e, isHotspot) {
+      if (!e.features.length) return;
+      const f = e.features[0].properties;
+      const area_ha = f.Area_m2 ? (f.Area_m2 / 10000).toFixed(2) : '–';
+      const confClass = f.confidence === 'higher confidence' ? 'confidence-high' : 'confidence-low';
+
+      const seasonRow = !isHotspot
+        ? `<div class="popup-row"><span>Season</span><span>${f.season || '–'}</span></div>`
+        : `<div class="popup-row"><span>Type</span><span>Cross-season hotspot</span></div>`;
+
+      popup.setLngLat(e.lngLat).setHTML(`
+        <div class="popup-title">${f.event_id || 'Avalanche Event'}</div>
+        ${seasonRow}
+        <div class="popup-row"><span>Area</span><span>${area_ha} ha</span></div>
+        <div class="popup-row"><span>Confidence</span><span class="${confClass}">${f.confidence || '–'}</span></div>
+        <div class="popup-row"><span>Sensor</span><span>Sentinel-1 SAR</span></div>
+      `).addTo(map);
+    }
+
+    map.on('click', 'avalanche-fill', (e) => showPopup(e, false));
+    map.on('click', 'hotspot-fill',   (e) => showPopup(e, true));
+
+    ['avalanche-fill', 'hotspot-fill'].forEach(id => {
+      map.on('mouseenter', id, () => map.getCanvas().style.cursor = 'pointer');
+      map.on('mouseleave', id, () => map.getCanvas().style.cursor = '');
+    });
+
+    // ── Season filter ───────────────────────────────────────────────────────
+    function applySeasonFilter() {
+      const active = [...document.querySelectorAll('#season-filter input:checked')]
+                     .map(cb => cb.value);
+      const filter = active.length === 3
+        ? null
+        : ['in', ['get', 'season'], ['literal', active]];
+
+      ['avalanche-fill', 'avalanche-outline'].forEach(id => map.setFilter(id, filter));
+      updateStats();
+    }
+
+    document.querySelectorAll('#season-filter input').forEach(cb => {
+      cb.addEventListener('change', applySeasonFilter);
+    });
+
+    // ── Layer toggles ───────────────────────────────────────────────────────
+    document.getElementById('toggle-seasonal').addEventListener('change', function() {
+      const vis = this.checked ? 'visible' : 'none';
+      ['avalanche-fill', 'avalanche-outline'].forEach(id => {
+        map.setLayoutProperty(id, 'visibility', vis);
+      });
+      updateStats();
+    });
+
+    document.getElementById('toggle-hotspot').addEventListener('change', function() {
+      const vis = this.checked ? 'visible' : 'none';
+      ['hotspot-fill', 'hotspot-outline'].forEach(id => {
+        map.setLayoutProperty(id, 'visibility', vis);
+      });
+    });
+
+    // ── Stats panel ─────────────────────────────────────────────────────────
+    function updateStats() {
+      const features  = map.queryRenderedFeatures({ layers: ['avalanche-fill'] });
+      const count     = features.length;
+      const totalArea = features.reduce((s, f) => s + (f.properties.Area_m2 || 0), 0);
+      const highConf  = features.filter(f => f.properties.confidence === 'higher confidence').length;
+
+      document.getElementById('count').textContent      = count;
+      document.getElementById('total-area').textContent = (totalArea / 10000).toFixed(1);
+      document.getElementById('high-conf').textContent  = highConf;
+    }
+
+    map.on('moveend', updateStats);
+    map.on('zoomend', updateStats);
+  </script>
+</body>
+</html>

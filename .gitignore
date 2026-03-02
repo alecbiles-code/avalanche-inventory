@@ -1,0 +1,4 @@
+*.mbtiles
+*.tif
+*.gpkg
+node_modules/
