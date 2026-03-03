@@ -506,6 +506,42 @@
 
     /* ── Debug ──────────────────────────────────────────────────────────── */
     #debug-msg { display: none; margin-top: 8px; font-family: var(--font-mono); font-size: 9.5px; color: var(--accent-yellow); background: rgba(250,204,21,0.08); border: 1px solid rgba(250,204,21,0.15); padding: 8px 10px; border-radius: 6px; line-height: 1.6; word-break: break-all; }
+
+    /* ── References ─────────────────────────────────────────────────────── */
+    .method-refs {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .refs-label {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .ref-item {
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 7px;
+    }
+
+    .ref-item em { color: var(--text-secondary); font-style: italic; }
+
+    .ref-num {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: rgba(239,68,68,0.6);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
   </style>
 </head>
 <body>
@@ -639,7 +675,7 @@
           <div class="step-number">05</div>
           <div class="step-content">
             <h4>Candidate Masking & Terrain Filtering</h4>
-            <p>Pixels with combined z-score ≥ 3.0 were flagged as candidates. Three static masks were applied: a terrain mask (slope 25–60°, excluding south-facing aspects), a JRC Global Surface Water mask (occurrence &lt; 50%), and a Hansen forest mask (canopy cover &lt; 30%). This suppresses false positives from freeze-thaw on water bodies, forest canopy loading, and flat or cliff terrain.</p>
+            <p>Pixels with combined z-score ≥ 3.0 were flagged as candidates. Two static masks were applied: a terrain mask (slope 20–70°, all aspects retained including south-facing slopes) and a JRC Global Surface Water mask (occurrence &lt; 50%) to suppress false positives from freeze-thaw cycles on lakes and reservoirs. Note: a Hansen forest canopy mask was not applied in this iteration, meaning detections in areas with &gt; 30% canopy cover may include false positives from snow loading and unloading on forest canopies.</p>
           </div>
         </div>
         <div class="method-connector"></div>
@@ -648,7 +684,7 @@
           <div class="step-number">06</div>
           <div class="step-content">
             <h4>Vectorization, Attribution & Confidence Scoring</h4>
-            <p>Candidate rasters were vectorized to polygons using connected-components analysis at 20 m resolution. Each polygon was attributed with area, mean/max z-score, mean slope, aspect, and centroid coordinates. A rule-based confidence score combining normalized max z-score, area plausibility, VH channel contribution, and slope angle classified each detection as <code>higher confidence</code> or <code>lower confidence</code>. Cross-season hotspots represent polygons detected in two or more seasons within 100 m of each other.</p>
+            <p>Candidate rasters were vectorized to polygons using connected-components analysis at 20 m resolution. Each polygon was attributed with area, mean/max z-score, mean slope, aspect, and centroid coordinates. Confidence was assigned by combined z-score threshold: polygons with a peak z-score of 3.0–6.0 were classified as <code>lower confidence</code>; polygons with a peak z-score &gt; 6.0 were classified as <code>higher confidence</code>. Cross-season hotspots represent polygons detected in two or more seasons within 100 m of each other.</p>
           </div>
         </div>
 
@@ -663,6 +699,17 @@
           <span class="method-tag">MapLibre GL JS</span>
           <span class="method-tag">DuckDB spatial</span>
           <span class="method-tag">CAIC validation</span>
+        </div>
+
+        <!-- Scientific References -->
+        <div class="method-refs">
+          <div class="refs-label">Scientific References</div>
+          <div class="ref-item"><span class="ref-num">[1]</span><span>Buhler, Y. et al. (2019). Mapping snow depth in alpine terrain with unmanned aerial systems (UAS): potential and limitations. <em>The Cryosphere</em>, 10(3), 1075&#8211;1088.</span></div>
+          <div class="ref-item"><span class="ref-num">[2]</span><span>Eckerstorfer, M. et al. (2016). Remote sensing of snow avalanches: Recent advances, potential, and limitations. <em>Cold Regions Science and Technology</em>, 121, 126&#8211;140.</span></div>
+          <div class="ref-item"><span class="ref-num">[3]</span><span>Leinss, S. et al. (2020). Coherence analysis of SAR data for snow avalanche detection. <em>Remote Sensing of Environment</em>, 240, 111695.</span></div>
+          <div class="ref-item"><span class="ref-num">[4]</span><span>Vickers, H. et al. (2016). Changes in SAR backscatter as an indicator of avalanche activity. <em>Cold Regions Science and Technology</em>, 135, 1&#8211;15.</span></div>
+          <div class="ref-item"><span class="ref-num">[5]</span><span>Gorelick, N. et al. (2017). Google Earth Engine: Planetary-scale geospatial analysis for everyone. <em>Remote Sensing of Environment</em>, 202, 18&#8211;27.</span></div>
+          <div class="ref-item"><span class="ref-num">[6]</span><span>Colorado Avalanche Information Center (CAIC). Avalanche accident and observation database. <em>colorado.gov/caic</em>. Accessed 2024.</span></div>
         </div>
 
       </div>
@@ -729,6 +776,21 @@
 
       // Seasonal
       map.addSource('avalanches', { type: 'vector', url: 'pmtiles://all_seasons.pmtiles' });
+
+      // Glow layer — renders UNDER fill, blurs edges to soften blocky pixel geometry
+      map.addLayer({
+        id: 'avalanche-glow',
+        type: 'line',
+        source: 'avalanches',
+        'source-layer': 'avalanches',
+        layout: { visibility: 'none' },
+        paint: {
+          'line-color': ['case', ['==', ['get', 'confidence'], 'higher confidence'], '#ef4444', '#facc15'],
+          'line-width': 8,
+          'line-blur': 6,
+          'line-opacity': 0.35
+        }
+      });
 
       map.addLayer({
         id: 'avalanche-fill', type: 'fill',
@@ -830,7 +892,7 @@
     function applySeasonFilter() {
       const active = [...document.querySelectorAll('#season-filter input:checked')].map(cb => cb.value);
       const filter = active.length === 3 ? null : ['in', ['get', 'season'], ['literal', active]];
-      ['avalanche-fill', 'avalanche-outline'].forEach(id => map.setFilter(id, filter));
+      ['avalanche-glow', 'avalanche-fill', 'avalanche-outline'].forEach(id => map.setFilter(id, filter));
       updateStats();
     }
     document.querySelectorAll('#season-filter input').forEach(cb => cb.addEventListener('change', applySeasonFilter));
@@ -838,7 +900,7 @@
     // ── Toggles ─────────────────────────────────────────────────────────────
     document.getElementById('toggle-seasonal').addEventListener('change', function() {
       const vis = this.checked ? 'visible' : 'none';
-      ['avalanche-fill', 'avalanche-outline'].forEach(id => map.setLayoutProperty(id, 'visibility', vis));
+      ['avalanche-glow', 'avalanche-fill', 'avalanche-outline'].forEach(id => map.setLayoutProperty(id, 'visibility', vis));
       updateStats();
     });
 
