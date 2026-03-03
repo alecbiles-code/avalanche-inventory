@@ -786,7 +786,7 @@
           <div class="step-number">02</div>
           <div class="step-content">
             <h4>Preprocessing & Terrain Normalization</h4>
-            <p>A focal mean speckle filter (5×5 kernel) was applied to <code>VV</code> and <code>VH</code> bands only, the incidence angle band was never smoothed. Backscatter was normalized to gamma-naught (γ⁰) using local incidence angle from SRTM DEM: <code>γ⁰ = σ⁰ − 10·log₁₀(cos θ)</code>. This makes backscatter comparable across varying slope orientations.</p>
+            <p>A focal mean speckle filter (5×5 kernel) was applied to <code>VV</code> and <code>VH</code> bands only   the incidence angle band was never smoothed. Backscatter was normalized to gamma-naught (γ⁰) using local incidence angle from SRTM DEM: <code>γ⁰ = σ⁰ − 10·log₁₀(cos θ)</code>. This makes backscatter comparable across varying slope orientations.</p>
           </div>
         </div>
         <div class="method-connector"></div>
@@ -906,7 +906,7 @@
     // ── Layers ──────────────────────────────────────────────────────────────
     map.on('load', () => {
 
-      // 3D terrain  must set after load to avoid black screen
+      // 3D terrain   must set after load to avoid black screen
       map.setTerrain({ source: 'terrain-dem', exaggeration: 1.4 });
 
       // Ease into 3D view
@@ -918,44 +918,6 @@
       map.addSource('avalanches', {
         type: 'vector',
         url: 'pmtiles://all_seasons.pmtiles'
-      });
-
-      // Outer glow  wide blur to feather hard pixel edges
-      map.addLayer({
-        id: 'avalanche-glow-outer',
-        type: 'line',
-        source: 'avalanches',
-        'source-layer': 'avalanches',
-        layout: { visibility: 'none' },
-        paint: {
-          'line-color': [
-            'case',
-            ['==', ['get', 'confidence'], 'higher confidence'], '#ef4444',
-            '#facc15'
-          ],
-          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 10, 13, 16],
-          'line-blur': ['interpolate', ['linear'], ['zoom'], 8, 8, 13, 14],
-          'line-opacity': 0.18
-        }
-      });
-
-      // Inner glow  tighter halo
-      map.addLayer({
-        id: 'avalanche-glow-inner',
-        type: 'line',
-        source: 'avalanches',
-        'source-layer': 'avalanches',
-        layout: { visibility: 'none' },
-        paint: {
-          'line-color': [
-            'case',
-            ['==', ['get', 'confidence'], 'higher confidence'], '#ef4444',
-            '#facc15'
-          ],
-          'line-width': 5,
-          'line-blur': 4,
-          'line-opacity': 0.3
-        }
       });
 
       // Fill
@@ -979,7 +941,7 @@
         }
       });
 
-      // Outline  subtle, softened
+      // Outline   subtle, softened
       map.addLayer({
         id: 'avalanche-outline',
         type: 'line',
@@ -1003,25 +965,6 @@
       map.addSource('hotspots', {
         type: 'vector',
         url: 'pmtiles://cross_season_hotspot.pmtiles'
-      });
-
-      // Hotspot outer glow
-      map.addLayer({
-        id: 'hotspot-glow',
-        type: 'line',
-        source: 'hotspots',
-        'source-layer': 'hotspots',
-        layout: { visibility: 'visible' },
-        paint: {
-          'line-color': [
-            'case',
-            ['==', ['get', 'confidence'], 'higher confidence'], '#ef4444',
-            '#facc15'
-          ],
-          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 10, 13, 16],
-          'line-blur': ['interpolate', ['linear'], ['zoom'], 8, 8, 13, 14],
-          'line-opacity': 0.2
-        }
       });
 
       // Hotspot fill
@@ -1076,7 +1019,7 @@
                 if (name !== 'hotspots') {
                   const el = document.getElementById('debug-msg');
                   el.style.display = 'block';
-                  el.textContent = `⚠ Hotspot source-layer is "${name}"  update HTML to match.`;
+                  el.textContent = `⚠ Hotspot source-layer is "${name}"   update HTML to match.`;
                 }
               }
             } catch {}
@@ -1118,7 +1061,7 @@
     });
 
     // ── Season filter ───────────────────────────────────────────────────────
-    const seasonalLayers = ['avalanche-glow-outer', 'avalanche-glow-inner', 'avalanche-fill', 'avalanche-outline'];
+    const seasonalLayers = ['avalanche-fill', 'avalanche-outline'];
 
     function applySeasonFilter() {
       const active = [...document.querySelectorAll('#season-filter input:checked')].map(cb => cb.value);
@@ -1139,7 +1082,7 @@
 
     document.getElementById('toggle-hotspot').addEventListener('change', function() {
       const vis = this.checked ? 'visible' : 'none';
-      ['hotspot-glow', 'hotspot-fill', 'hotspot-outline'].forEach(id =>
+      ['hotspot-fill', 'hotspot-outline'].forEach(id =>
         map.setLayoutProperty(id, 'visibility', vis)
       );
       updateStats();
