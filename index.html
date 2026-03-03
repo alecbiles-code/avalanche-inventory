@@ -7,75 +7,142 @@
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
   <script src="https://unpkg.com/pmtiles@3.0.6/dist/pmtiles.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; font-family: 'Helvetica Neue', sans-serif; background: #0a0a0a; }
+    :root {
+      --bg-panel: rgba(8, 10, 18, 0.94);
+      --border-subtle: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --text-primary: #f0f0f5;
+      --text-secondary: #8a8a9a;
+      --text-muted: #55556a;
+      --accent-red: #ef4444;
+      --accent-yellow: #facc15;
+      --accent-purple: #a855f7;
+      --font-body: 'DM Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-body); background: #06060a; overflow: hidden; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
+    /* ── Panel ──────────────────────────────────────────────────────────── */
     #panel {
       position: absolute;
-      top: 20px;
-      left: 20px;
-      background: rgba(10, 10, 20, 0.92);
-      color: #eee;
-      padding: 18px 20px;
-      border-radius: 10px;
-      width: 290px;
+      top: 16px;
+      left: 16px;
+      background: var(--bg-panel);
+      color: var(--text-primary);
+      padding: 0;
+      border-radius: 14px;
+      width: 280px;
       z-index: 1;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.6);
-      border: 1px solid rgba(255,255,255,0.07);
+      box-shadow:
+        0 0 0 1px var(--border-subtle),
+        0 8px 40px rgba(0,0,0,0.7),
+        0 2px 8px rgba(0,0,0,0.4);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      overflow: hidden;
+      animation: panelSlide 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      transform: translateY(-10px);
     }
 
-    #panel h2 {
-      margin: 0 0 4px;
-      font-size: 15px;
-      color: #fff;
-      letter-spacing: 0.3px;
+    @keyframes panelSlide {
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    #panel .subtitle {
-      font-size: 11px;
-      color: #666;
-      margin: 0 0 14px;
+    .panel-header {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+    }
+
+    .panel-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.2px;
+      margin-bottom: 3px;
+    }
+
+    .panel-header .subtitle {
+      font-size: 10.5px;
+      color: var(--text-muted);
       line-height: 1.5;
+      letter-spacing: 0.1px;
     }
+
+    .panel-section {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .panel-section:last-child { border-bottom: none; }
 
     .section-label {
-      font-size: 10px;
-      color: #555;
+      font-size: 9.5px;
+      color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 8px;
+      letter-spacing: 1px;
       font-weight: 600;
+      margin-bottom: 10px;
     }
 
+    /* ── Legend ─────────────────────────────────────────────────────────── */
     .legend-item {
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 10px;
       font-size: 12px;
-      margin-bottom: 7px;
-      color: #ccc;
+      margin-bottom: 6px;
+      color: var(--text-secondary);
     }
+
+    .legend-item:last-child { margin-bottom: 0; }
 
     .legend-swatch {
-      width: 13px;
-      height: 13px;
-      border-radius: 3px;
+      width: 20px;
+      height: 10px;
+      border-radius: 2px;
       flex-shrink: 0;
+      position: relative;
     }
 
-    .divider {
-      border: none;
-      border-top: 1px solid rgba(255,255,255,0.07);
-      margin: 14px 0;
+    .legend-swatch::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 2px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
     }
 
+    .legend-label-conf {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+
+    .conf-high {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-red);
+    }
+
+    .conf-low {
+      background: rgba(250, 204, 21, 0.15);
+      color: var(--accent-yellow);
+    }
+
+    /* ── Filters ────────────────────────────────────────────────────────── */
     #season-filter {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
     }
 
     #season-filter label {
@@ -84,28 +151,65 @@
       gap: 8px;
       font-size: 12px;
       cursor: pointer;
-      color: #bbb;
+      color: var(--text-secondary);
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    #season-filter label:hover {
+      background: rgba(255,255,255,0.04);
     }
 
     #season-filter input[type="checkbox"] {
-      accent-color: #ffa500;
-      width: 13px;
-      height: 13px;
+      appearance: none;
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.15s;
+      flex-shrink: 0;
     }
 
+    #season-filter input[type="checkbox"]:checked {
+      background: var(--accent-red);
+      border-color: var(--accent-red);
+    }
+
+    #season-filter input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 3.5px;
+      top: 1px;
+      width: 4px;
+      height: 7px;
+      border: solid #fff;
+      border-width: 0 1.5px 1.5px 0;
+      transform: rotate(45deg);
+    }
+
+    /* ── Toggles ────────────────────────────────────────────────────────── */
     .toggle-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 12px;
-      color: #bbb;
-      margin-top: 6px;
+      color: var(--text-secondary);
+      padding: 5px 0;
+    }
+
+    .toggle-row + .toggle-row {
+      margin-top: 2px;
     }
 
     .toggle-switch {
       position: relative;
-      width: 36px;
-      height: 20px;
+      width: 34px;
+      height: 18px;
+      flex-shrink: 0;
     }
 
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
@@ -113,125 +217,285 @@
     .toggle-slider {
       position: absolute;
       cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #333;
-      border-radius: 20px;
-      transition: .3s;
+      inset: 0;
+      background: rgba(255,255,255,0.1);
+      border-radius: 18px;
+      transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .toggle-slider:before {
       position: absolute;
       content: "";
-      height: 14px; width: 14px;
-      left: 3px; bottom: 3px;
-      background-color: white;
+      height: 12px;
+      width: 12px;
+      left: 3px;
+      bottom: 3px;
+      background: #666;
       border-radius: 50%;
-      transition: .3s;
+      transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    input:checked + .toggle-slider { background-color: #ff4500; }
-    input:checked + .toggle-slider:before { transform: translateX(16px); }
+    input:checked + .toggle-slider {
+      background: var(--accent-red);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+    }
 
+    input:checked + .toggle-slider:before {
+      transform: translateX(16px);
+      background: #fff;
+    }
+
+    /* ── Stats ──────────────────────────────────────────────────────────── */
     #stats {
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(255,255,255,0.07);
-      font-size: 11px;
-      color: #555;
-      line-height: 1.9;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
 
-    #stats span { color: #ddd; font-weight: 600; }
-
-    .maplibregl-popup-content {
-      background: #111827;
-      color: #e5e7eb;
+    .stat-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-subtle);
       border-radius: 8px;
-      padding: 12px 14px;
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      font-size: 12px;
-      min-width: 200px;
+      padding: 10px 11px;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .stat-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .stat-value {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .stat-label {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-top: 2px;
+    }
+
+    /* ── Popup ──────────────────────────────────────────────────────────── */
+    .maplibregl-popup-content {
+      background: rgba(8, 10, 18, 0.96) !important;
+      color: var(--text-primary) !important;
+      border-radius: 10px !important;
+      padding: 14px 16px !important;
+      border: 1px solid var(--border-subtle) !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+      backdrop-filter: blur(16px) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+      font-size: 12px !important;
+      min-width: 220px;
+      font-family: var(--font-body) !important;
+    }
+
+    .maplibregl-popup-tip {
+      border-top-color: rgba(8, 10, 18, 0.96) !important;
     }
 
     .maplibregl-popup-close-button {
-      color: #9ca3af;
-      font-size: 16px;
-      padding: 4px 8px;
+      color: var(--text-muted) !important;
+      font-size: 18px !important;
+      padding: 4px 8px !important;
+      right: 4px !important;
+      top: 4px !important;
+    }
+
+    .maplibregl-popup-close-button:hover {
+      color: var(--text-primary) !important;
+      background: transparent !important;
     }
 
     .popup-title {
       font-size: 13px;
       font-weight: 600;
-      color: #ffa500;
-      margin-bottom: 8px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      letter-spacing: -0.2px;
     }
 
     .popup-row {
       display: flex;
       justify-content: space-between;
       gap: 12px;
-      padding: 2px 0;
-      color: #9ca3af;
+      padding: 3px 0;
+      color: var(--text-muted);
+      font-size: 11.5px;
     }
 
-    .popup-row span:last-child { color: #e5e7eb; font-weight: 500; }
+    .popup-row span:last-child {
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-align: right;
+    }
 
-    .confidence-high { color: #4ade80 !important; }
-    .confidence-low  { color: #facc15 !important; }
+    .confidence-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+
+    .confidence-badge.high {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-red);
+    }
+
+    .confidence-badge.low {
+      background: rgba(250, 204, 21, 0.2);
+      color: var(--accent-yellow);
+    }
+
+    /* ── MapLibre overrides ─────────────────────────────────────────────── */
+    .maplibregl-ctrl-group {
+      background: var(--bg-panel) !important;
+      border: 1px solid var(--border-subtle) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+      overflow: hidden;
+    }
+
+    .maplibregl-ctrl-group button {
+      background: transparent !important;
+      border-color: var(--border-subtle) !important;
+    }
+
+    .maplibregl-ctrl-group button + button {
+      border-top: 1px solid var(--border-subtle) !important;
+    }
+
+    .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+      filter: invert(1) brightness(0.7);
+    }
+
+    .maplibregl-ctrl-group button:hover .maplibregl-ctrl-icon {
+      filter: invert(1) brightness(1);
+    }
+
+    .maplibregl-ctrl-scale {
+      background: rgba(8,10,18,0.8) !important;
+      color: var(--text-muted) !important;
+      border-color: var(--text-muted) !important;
+      font-family: var(--font-mono) !important;
+      font-size: 10px !important;
+      padding: 1px 6px !important;
+      border-radius: 4px !important;
+    }
+
+    .maplibregl-ctrl-attrib {
+      background: rgba(8,10,18,0.7) !important;
+      font-size: 9px !important;
+    }
+
+    .maplibregl-ctrl-attrib a {
+      color: var(--text-muted) !important;
+    }
+
+    /* ── Debug console for hotspot ──────────────────────────────────────── */
+    #debug-msg {
+      display: none;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      color: var(--accent-yellow);
+      background: rgba(250, 204, 21, 0.08);
+      border: 1px solid rgba(250, 204, 21, 0.15);
+      padding: 8px 10px;
+      border-radius: 6px;
+      line-height: 1.6;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
 
   <div id="panel">
-    <h2>🏔 SAR Avalanche Inventory</h2>
-    <p class="subtitle">Colorado Front Range · Sentinel-1 amplitude change detection · 2021–2024</p>
-
-    <div class="section-label">Seasonal Detections</div>
-    <div class="legend-item">
-      <div class="legend-swatch" style="background:#ff4500;"></div>2021–2022
-    </div>
-    <div class="legend-item">
-      <div class="legend-swatch" style="background:#ffa500;"></div>2022–2023
-    </div>
-    <div class="legend-item">
-      <div class="legend-swatch" style="background:#facc15;"></div>2023–2024
+    <!-- Header -->
+    <div class="panel-header">
+      <h2>SAR Avalanche Inventory</h2>
+      <p class="subtitle">Colorado Front Range · Sentinel-1 amplitude change detection · 2021–2024</p>
     </div>
 
-    <hr class="divider">
-
-    <div class="section-label">Filter by Season</div>
-    <div id="season-filter">
-      <label><input type="checkbox" value="2021-2022" checked> 2021–2022</label>
-      <label><input type="checkbox" value="2022-2023" checked> 2022–2023</label>
-      <label><input type="checkbox" value="2023-2024" checked> 2023–2024</label>
+    <!-- Legend -->
+    <div class="panel-section">
+      <div class="section-label">Confidence Symbology</div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:var(--accent-red); opacity:1;"></div>
+        <span>Higher confidence</span>
+        <span class="legend-label-conf conf-high">100%</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:var(--accent-yellow); opacity:0.7;"></div>
+        <span>Lower confidence</span>
+        <span class="legend-label-conf conf-low">70%</span>
+      </div>
     </div>
 
-    <hr class="divider">
-
-    <div class="section-label">Layers</div>
-    <div class="toggle-row">
-      <span>Seasonal detections</span>
-      <label class="toggle-switch">
-        <input type="checkbox" id="toggle-seasonal" checked>
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
-    <div class="toggle-row">
-      <span>Cross-season hotspots</span>
-      <label class="toggle-switch">
-        <input type="checkbox" id="toggle-hotspot">
-        <span class="toggle-slider"></span>
-      </label>
+    <!-- Season Filter -->
+    <div class="panel-section">
+      <div class="section-label">Filter by Season</div>
+      <div id="season-filter">
+        <label><input type="checkbox" value="2021-2022" checked> 2021–2022</label>
+        <label><input type="checkbox" value="2022-2023" checked> 2022–2023</label>
+        <label><input type="checkbox" value="2023-2024" checked> 2023–2024</label>
+      </div>
     </div>
 
-    <div id="stats">
-      Visible events: <span id="count">–</span><br>
-      Total area: <span id="total-area">–</span> ha<br>
-      Higher confidence: <span id="high-conf">–</span>
+    <!-- Layer Toggles -->
+    <div class="panel-section">
+      <div class="section-label">Layers</div>
+      <div class="toggle-row">
+        <span>Seasonal detections</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggle-seasonal" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <span>Cross-season hotspots</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggle-hotspot">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div id="debug-msg"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="panel-section">
+      <div class="section-label">Viewport Statistics</div>
+      <div id="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="count">–</div>
+          <div class="stat-label">Events</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="total-area">–</div>
+          <div class="stat-label">Area (ha)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="high-conf">–</div>
+          <div class="stat-label">High Conf.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="low-conf">–</div>
+          <div class="stat-label">Low Conf.</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -240,20 +504,48 @@
     const protocol = new pmtiles.Protocol();
     maplibregl.addProtocol('pmtiles', protocol.tile);
 
-    // ── Map init ────────────────────────────────────────────────────────────
+    // ── Map init with satellite + dark blend ────────────────────────────────
     const map = new maplibregl.Map({
       container: 'map',
       style: {
         version: 8,
         sources: {
-          'carto-dark': {
+          'esri-satellite': {
             type: 'raster',
-            tiles: ['https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'],
+            tiles: [
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+            ],
+            tileSize: 256,
+            maxzoom: 19,
+            attribution: '© Esri, Maxar, Earthstar Geographics'
+          },
+          'carto-dark-labels': {
+            type: 'raster',
+            tiles: [
+              'https://basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}@2x.png'
+            ],
             tileSize: 256,
             attribution: '© CARTO © OpenStreetMap contributors'
           }
         },
-        layers: [{ id: 'background', type: 'raster', source: 'carto-dark' }]
+        layers: [
+          {
+            id: 'satellite',
+            type: 'raster',
+            source: 'esri-satellite',
+            paint: {
+              'raster-brightness-max': 0.55,
+              'raster-contrast': 0.15,
+              'raster-saturation': -0.3
+            }
+          },
+          {
+            id: 'labels',
+            type: 'raster',
+            source: 'carto-dark-labels',
+            paint: { 'raster-opacity': 0.85 }
+          }
+        ]
       },
       center: [-105.78, 40.0],
       zoom: 9
@@ -271,7 +563,7 @@
         url: 'pmtiles://all_seasons.pmtiles'
       });
 
-      // Fill
+      // Fill — symbolized by confidence, NOT season
       map.addLayer({
         id: 'avalanche-fill',
         type: 'fill',
@@ -279,16 +571,14 @@
         'source-layer': 'avalanches',
         paint: {
           'fill-color': [
-            'match', ['get', 'season'],
-            '2021-2022', '#ff4500',
-            '2022-2023', '#ffa500',
-            '2023-2024', '#facc15',
-            '#ffffff'
+            'case',
+            ['==', ['get', 'confidence'], 'higher confidence'], '#ef4444',
+            '#facc15'
           ],
           'fill-opacity': [
             'case',
-            ['==', ['get', 'confidence'], 'higher confidence'], 0.65,
-            0.35
+            ['==', ['get', 'confidence'], 'higher confidence'], 1.0,
+            0.7
           ]
         }
       });
@@ -300,9 +590,18 @@
         source: 'avalanches',
         'source-layer': 'avalanches',
         paint: {
-          'line-color': '#fff',
-          'line-width': 0.6,
-          'line-opacity': 0.3
+          'line-color': [
+            'case',
+            ['==', ['get', 'confidence'], 'higher confidence'],
+            'rgba(239, 68, 68, 0.6)',
+            'rgba(250, 204, 21, 0.4)'
+          ],
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            7, 0.3,
+            12, 1
+          ],
+          'line-opacity': 0.5
         }
       });
 
@@ -312,7 +611,36 @@
         url: 'pmtiles://cross_season_hotspot.pmtiles'
       });
 
-      // Hotspot fill — starts hidden
+      // Inspect hotspot source metadata for debugging
+      map.on('sourcedata', (e) => {
+        if (e.sourceId === 'hotspots' && e.isSourceLoaded) {
+          try {
+            const src = map.getSource('hotspots');
+            // Log available vector layer IDs from PMTiles metadata
+            console.log('[Hotspot debug] Source loaded:', src);
+
+            // Attempt to find features with different possible source-layer names
+            const candidates = ['hotspots', 'cross_season_hotspot', 'default', 'cross_season_hotspots'];
+            candidates.forEach(name => {
+              try {
+                const testFeatures = map.querySourceFeatures('hotspots', { sourceLayer: name });
+                if (testFeatures.length > 0) {
+                  console.log(`[Hotspot debug] Found ${testFeatures.length} features in source-layer "${name}"`);
+                  const debugEl = document.getElementById('debug-msg');
+                  if (debugEl && name !== 'hotspots') {
+                    debugEl.style.display = 'block';
+                    debugEl.textContent = `⚠ Hotspot source-layer might be "${name}" (found ${testFeatures.length} features). Update layer config.`;
+                  }
+                }
+              } catch (err) { /* skip */ }
+            });
+          } catch (err) {
+            console.log('[Hotspot debug] Metadata read error:', err);
+          }
+        }
+      });
+
+      // Hotspot fill — try with 'hotspots' source-layer
       map.addLayer({
         id: 'hotspot-fill',
         type: 'fill',
@@ -321,7 +649,7 @@
         layout: { visibility: 'none' },
         paint: {
           'fill-color': '#a855f7',
-          'fill-opacity': 0.7
+          'fill-opacity': 0.55
         }
       });
 
@@ -333,9 +661,9 @@
         'source-layer': 'hotspots',
         layout: { visibility: 'none' },
         paint: {
-          'line-color': '#d8b4fe',
-          'line-width': 1,
-          'line-opacity': 0.6
+          'line-color': '#c084fc',
+          'line-width': 1.5,
+          'line-opacity': 0.7
         }
       });
 
@@ -349,18 +677,20 @@
       if (!e.features.length) return;
       const f = e.features[0].properties;
       const area_ha = f.Area_m2 ? (f.Area_m2 / 10000).toFixed(2) : '–';
-      const confClass = f.confidence === 'higher confidence' ? 'confidence-high' : 'confidence-low';
+      const isHigh = f.confidence === 'higher confidence';
+      const confBadgeClass = isHigh ? 'high' : 'low';
+      const confLabel = isHigh ? 'Higher' : 'Lower';
 
-      const seasonRow = !isHotspot
-        ? `<div class="popup-row"><span>Season</span><span>${f.season || '–'}</span></div>`
-        : `<div class="popup-row"><span>Type</span><span>Cross-season hotspot</span></div>`;
+      const typeRow = isHotspot
+        ? `<div class="popup-row"><span>Type</span><span>Cross-season hotspot</span></div>`
+        : `<div class="popup-row"><span>Season</span><span>${f.season || '–'}</span></div>`;
 
       popup.setLngLat(e.lngLat).setHTML(`
-        <div class="popup-title">${f.event_id || 'Avalanche Event'}</div>
-        ${seasonRow}
+        <div class="popup-title">${f.event_id || 'Avalanche Detection'}</div>
+        ${typeRow}
         <div class="popup-row"><span>Area</span><span>${area_ha} ha</span></div>
-        <div class="popup-row"><span>Confidence</span><span class="${confClass}">${f.confidence || '–'}</span></div>
-        <div class="popup-row"><span>Sensor</span><span>Sentinel-1 SAR</span></div>
+        <div class="popup-row"><span>Confidence</span><span class="confidence-badge ${confBadgeClass}">${confLabel}</span></div>
+        <div class="popup-row"><span>Sensor</span><span>Sentinel-1 C-SAR</span></div>
       `).addTo(map);
     }
 
@@ -402,18 +732,52 @@
       ['hotspot-fill', 'hotspot-outline'].forEach(id => {
         map.setLayoutProperty(id, 'visibility', vis);
       });
+
+      // Debug: try to query features when toggled on
+      if (this.checked) {
+        setTimeout(() => {
+          const debugEl = document.getElementById('debug-msg');
+          const features = map.queryRenderedFeatures({ layers: ['hotspot-fill'] });
+          if (features.length === 0) {
+            debugEl.style.display = 'block';
+            debugEl.innerHTML = '⚠ 0 hotspot features rendered.<br>Check: source-layer name, zoom range, or empty tileset. Open console for details.';
+
+            // Extra debug: check all source layers
+            try {
+              const src = map.getSource('hotspots');
+              console.log('[Hotspot] Source object:', src);
+              console.log('[Hotspot] Trying querySourceFeatures...');
+              const srcFeats = map.querySourceFeatures('hotspots', { sourceLayer: 'hotspots' });
+              console.log('[Hotspot] querySourceFeatures("hotspots"):', srcFeats.length, 'features');
+            } catch (err) {
+              console.log('[Hotspot] Debug error:', err);
+            }
+          } else {
+            debugEl.style.display = 'none';
+          }
+        }, 500);
+      } else {
+        document.getElementById('debug-msg').style.display = 'none';
+      }
     });
 
     // ── Stats panel ─────────────────────────────────────────────────────────
     function updateStats() {
-      const features  = map.queryRenderedFeatures({ layers: ['avalanche-fill'] });
+      let features;
+      try {
+        features = map.queryRenderedFeatures({ layers: ['avalanche-fill'] });
+      } catch {
+        features = [];
+      }
       const count     = features.length;
       const totalArea = features.reduce((s, f) => s + (f.properties.Area_m2 || 0), 0);
       const highConf  = features.filter(f => f.properties.confidence === 'higher confidence').length;
+      const lowConf   = count - highConf;
 
-      document.getElementById('count').textContent      = count;
-      document.getElementById('total-area').textContent = (totalArea / 10000).toFixed(1);
-      document.getElementById('high-conf').textContent  = highConf;
+      document.getElementById('count').textContent      = count.toLocaleString();
+      document.getElementById('total-area').textContent  = (totalArea / 10000).toFixed(1);
+      document.getElementById('high-conf').textContent   = highConf.toLocaleString();
+      document.getElementById('low-conf').textContent    = lowConf.toLocaleString();
     }
 
     map.on('moveend', updateStats);
