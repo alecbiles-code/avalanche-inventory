@@ -635,8 +635,6 @@
             tileSize: 256,
             attribution: '© CARTO © OpenStreetMap contributors'
           },
-          // AWS Open Terrain — free, no API key required
-          // Terrarium encoding: R*256 + G + B/256 - 32768 = elevation in meters
           'terrain-dem': {
             type: 'raster-dem',
             tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
@@ -649,28 +647,12 @@
           { id: 'satellite', type: 'raster', source: 'esri-satellite',
             paint: { 'raster-brightness-max': 0.55, 'raster-contrast': 0.15, 'raster-saturation': -0.3 } },
           { id: 'labels', type: 'raster', source: 'carto-dark-labels',
-            paint: { 'raster-opacity': 0.85 } },
-          // Sky layer — visible when map is pitched, gives atmospheric depth
-          {
-            id: 'sky',
-            type: 'sky',
-            paint: {
-              'sky-type': 'atmosphere',
-              'sky-atmosphere-sun': [0.0, 90.0],
-              'sky-atmosphere-sun-intensity': 15,
-              'sky-atmosphere-color': 'rgba(15, 15, 30, 1)',
-              'sky-atmosphere-halo-color': 'rgba(60, 60, 120, 0.8)',
-              'sky-gradient-center': [0, 0],
-              'sky-gradient-radius': 90,
-              'sky-opacity': 0.85
-            }
-          }
+            paint: { 'raster-opacity': 0.85 } }
         ]
       },
       center: [-105.78, 40.0],
-      zoom: 9,
-      pitch: 55,      // 3D tilt — 0 = flat top-down, 60 = dramatic angle
-      bearing: -20    // Slight rotation to show mountain ridgelines well
+      zoom: 9
+      // pitch and bearing set AFTER load — setting them here before terrain loads causes black screen
     });
 
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -680,9 +662,13 @@
     map.on('load', () => {
 
       // ── 3D Terrain ──────────────────────────────────────────────────────
+      // Must be set AFTER load — terrain + pitch in constructor = black screen
       map.setTerrain({ source: 'terrain-dem', exaggeration: 1.4 });
-      // exaggeration: 1.0 = true scale, 1.4 = slightly dramatized for readability
-      // Increase to 2.0 for very dramatic relief, decrease to 1.0 for accurate
+
+      // Ease into 3D view after a short delay so tiles have time to load first
+      setTimeout(() => {
+        map.easeTo({ pitch: 52, bearing: -18, duration: 1800 });
+      }, 600);
 
       // Seasonal
       map.addSource('avalanches', { type: 'vector', url: 'pmtiles://all_seasons.pmtiles' });
