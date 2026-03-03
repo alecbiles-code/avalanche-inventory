@@ -10,7 +10,7 @@ This is an end-to-end satellite-derived avalanche detection pipeline for Colorad
 
 Avalanche debris leaves a measurable signature in SAR backscatter. Disturbed snow and exposed terrain scatter C-band energy differently than undisturbed snowpack. This project detects those anomalies by comparing winter backscatter against a per-pixel summer baseline across three seasons (2021–22, 2022–23, 2023–24) and vectorizing statistically significant changes into an avalanche inventory.
 
-Cross-season hotspots highlight terrain that triggered detections in two or more winters. The most operationally useful layer for backcountry travel planning.
+Cross-season hotspots highlight terrain that triggered detections in two or more winters which probaly maks it the most useful layer.
 
 ---
 
