@@ -679,7 +679,7 @@
         layout: { visibility: 'none' },
         paint: {
           'fill-color': ['case', ['==', ['get', 'confidence'], 'higher confidence'], '#ef4444', '#facc15'],
-          'fill-opacity': ['case', ['==', ['get', 'confidence'], 'higher confidence'], 1.0, 0.5]
+          'fill-opacity': ['case', ['==', ['get', 'confidence'], 'higher confidence'], 1.0, 0.25]
         }
       });
 
@@ -703,7 +703,7 @@
         layout: { visibility: 'visible' },
         paint: {
           'fill-color': ['case', ['==', ['get', 'confidence'], 'higher confidence'], '#ef4444', '#facc15'],
-          'fill-opacity': ['case', ['==', ['get', 'confidence'], 'higher confidence'], 0.85, 0.5]
+          'fill-opacity': ['case', ['==', ['get', 'confidence'], 'higher confidence'], 0.85, 0.25]
         }
       });
 
