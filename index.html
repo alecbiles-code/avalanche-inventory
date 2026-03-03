@@ -27,7 +27,73 @@
     body { font-family: var(--font-body); background: #06060a; overflow: hidden; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
-    /* ── Scanline atmosphere overlay ────────────────────────────────────── */
+    /* ── Panel collapse toggle ──────────────────────────────────────────── */
+    #panel-toggle {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      width: 36px;
+      height: 36px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 16px;
+      cursor: pointer;
+      display: none;  /* hidden while panel is visible */
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transition: all 0.2s;
+    }
+
+    #panel-toggle:hover {
+      background: rgba(20, 22, 35, 0.98);
+      color: var(--text-primary);
+      border-color: var(--border-hover);
+    }
+
+    #panel.collapsed {
+      transform: translateX(-310px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #panel {
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    }
+
+    /* Hide button inside panel header */
+    .panel-hide-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 13px;
+      width: 26px;
+      height: 26px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .panel-hide-btn:hover {
+      background: rgba(255,255,255,0.12);
+      color: var(--text-primary);
+    }
+
+    @media (max-width: 600px) {
+      #panel { width: calc(100vw - 32px); }
+    }
     #scanline {
       position: absolute;
       inset: 0;
@@ -456,11 +522,15 @@
   <div id="scanline"></div>
   <div id="map"></div>
 
+  <!-- Show panel button — visible only when panel is collapsed -->
+  <button id="panel-toggle" onclick="showPanel()" title="Show panel">☰</button>
+
   <!-- ── Panel ──────────────────────────────────────────────────────────── -->
   <div id="panel">
     <div class="panel-header">
       <h2>SAR Avalanche Inventory</h2>
       <p class="subtitle">Colorado Front Range · Sentinel-1 · 2021–2024</p>
+      <button class="panel-hide-btn" onclick="hidePanel()" title="Hide panel">✕</button>
     </div>
 
     <div class="panel-section">
@@ -679,7 +749,7 @@
         layout: { visibility: 'none' },
         paint: {
           'fill-color': ['case', ['==', ['get', 'confidence'], 'higher confidence'], '#ef4444', '#facc15'],
-          'fill-opacity': ['case', ['==', ['get', 'confidence'], 'higher confidence'], 1.0, 0.25]
+          'fill-opacity': ['case', ['==', ['get', 'confidence'], 'higher confidence'], 1.0, 0.2]
         }
       });
 
@@ -703,7 +773,7 @@
         layout: { visibility: 'visible' },
         paint: {
           'fill-color': ['case', ['==', ['get', 'confidence'], 'higher confidence'], '#ef4444', '#facc15'],
-          'fill-opacity': ['case', ['==', ['get', 'confidence'], 'higher confidence'], 0.85, 0.25]
+          'fill-opacity': ['case', ['==', ['get', 'confidence'], 'higher confidence'], 0.85, 0.2]
         }
       });
 
@@ -829,6 +899,21 @@
 
     map.on('moveend', updateStats);
     map.on('zoomend', updateStats);
+
+    // ── Panel hide/show ─────────────────────────────────────────────────────
+    function hidePanel() {
+      document.getElementById('panel').classList.add('collapsed');
+      const btn = document.getElementById('panel-toggle');
+      btn.style.display = 'flex';
+      // Animate button in
+      btn.style.opacity = '0';
+      setTimeout(() => { btn.style.opacity = '1'; }, 10);
+    }
+
+    function showPanel() {
+      document.getElementById('panel').classList.remove('collapsed');
+      document.getElementById('panel-toggle').style.display = 'none';
+    }
 
     // ── Methodology modal ───────────────────────────────────────────────────
     function openMethodology() {
