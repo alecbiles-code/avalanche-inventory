@@ -27,73 +27,74 @@
     body { font-family: var(--font-body); background: #06060a; overflow: hidden; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
-    /* ── Panel collapse toggle ──────────────────────────────────────────── */
-    #panel-toggle {
+    /* ── Panel sidebar with arrow tab ─────────────────────────────────── */
+
+    /* Wrapper holds panel + arrow tab together as one unit */
+    #panel-wrapper {
       position: absolute;
       top: 16px;
       left: 16px;
-      width: 36px;
-      height: 36px;
-      background: var(--bg-panel);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      color: var(--text-secondary);
-      font-size: 16px;
-      cursor: pointer;
-      display: none;  /* hidden while panel is visible */
-      align-items: center;
-      justify-content: center;
-      z-index: 2;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      transition: all 0.2s;
+      z-index: 10;
+      display: flex;
+      align-items: flex-start;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    #panel-toggle:hover {
-      background: rgba(20, 22, 35, 0.98);
-      color: var(--text-primary);
-      border-color: var(--border-hover);
-    }
-
-    #panel.collapsed {
-      transform: translateX(-310px);
-      opacity: 0;
-      pointer-events: none;
+    #panel-wrapper.collapsed {
+      transform: translateX(-296px);
     }
 
     #panel {
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      width: 280px;
+      flex-shrink: 0;
     }
 
-    /* Hide button inside panel header */
-    .panel-hide-btn {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      background: rgba(255,255,255,0.06);
+    /* Arrow tab — sits flush on the right edge of the wrapper */
+    #panel-arrow {
+      width: 22px;
+      height: 48px;
+      background: var(--bg-panel);
       border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      color: var(--text-muted);
-      font-size: 13px;
-      width: 26px;
-      height: 26px;
+      border-left: none;
+      border-radius: 0 8px 8px 0;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.15s;
+      margin-top: 20px;
+      box-shadow: 4px 0 12px rgba(0,0,0,0.4);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transition: background 0.15s, box-shadow 0.15s;
       flex-shrink: 0;
+      color: var(--text-muted);
+      font-size: 11px;
+      user-select: none;
     }
 
-    .panel-hide-btn:hover {
-      background: rgba(255,255,255,0.12);
-      color: var(--text-primary);
+    #panel-arrow:hover {
+      background: rgba(20, 22, 35, 0.98);
+      color: var(--text-secondary);
+      box-shadow: 6px 0 16px rgba(0,0,0,0.5);
+    }
+
+    /* Arrow character flips when collapsed */
+    #panel-arrow::after {
+      content: '‹';
+      font-size: 16px;
+      line-height: 1;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #panel-wrapper.collapsed #panel-arrow::after {
+      transform: rotate(180deg);
     }
 
     @media (max-width: 600px) {
-      #panel { width: calc(100vw - 32px); }
+      #panel { width: calc(100vw - 54px); }
+      #panel-wrapper.collapsed { transform: translateX(calc(-100vw + 54px)); }
     }
+
     #scanline {
       position: absolute;
       inset: 0;
@@ -119,15 +120,11 @@
 
     /* ── Panel ──────────────────────────────────────────────────────────── */
     #panel {
-      position: absolute;
-      top: 16px;
-      left: 16px;
       background: var(--bg-panel);
       color: var(--text-primary);
       padding: 0;
       border-radius: 14px;
       width: 280px;
-      z-index: 1;
       box-shadow:
         0 0 0 1px var(--border-subtle),
         0 8px 40px rgba(0,0,0,0.7),
@@ -135,13 +132,6 @@
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       overflow: hidden;
-      animation: panelSlide 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-
-    @keyframes panelSlide {
-      to { opacity: 1; transform: translateY(0); }
     }
 
     .panel-header {
@@ -522,16 +512,13 @@
   <div id="scanline"></div>
   <div id="map"></div>
 
-  <!-- Show panel button — visible only when panel is collapsed -->
-  <button id="panel-toggle" onclick="showPanel()" title="Show panel">☰</button>
-
-  <!-- ── Panel ──────────────────────────────────────────────────────────── -->
-  <div id="panel">
-    <div class="panel-header">
-      <h2>SAR Avalanche Inventory</h2>
-      <p class="subtitle">Colorado Front Range · Sentinel-1 · 2021–2024</p>
-      <button class="panel-hide-btn" onclick="hidePanel()" title="Hide panel">✕</button>
-    </div>
+  <!-- ── Panel wrapper (slides left/right as one unit) ─────────────────── -->
+  <div id="panel-wrapper">
+    <div id="panel">
+      <div class="panel-header">
+        <h2>SAR Avalanche Inventory</h2>
+        <p class="subtitle">Colorado Front Range · Sentinel-1 · 2021–2024</p>
+      </div>
 
     <div class="panel-section">
       <div class="section-label">Confidence Symbology</div>
@@ -594,12 +581,12 @@
         </div>
       </div>
     </div>
-    <div class="panel-section" style="padding-top:10px; padding-bottom:14px; border-bottom:none;">
-      <button class="method-btn" onclick="openMethodology()">View Detection Methodology</button>
-    </div>
-  </div>
-
-
+      <div class="panel-section" style="padding-top:10px; padding-bottom:14px; border-bottom:none;">
+        <button class="method-btn" onclick="openMethodology()">View Detection Methodology</button>
+      </div>
+    </div><!-- end #panel -->
+    <div id="panel-arrow" onclick="togglePanel()" title="Toggle panel"></div>
+  </div><!-- end #panel-wrapper -->
 
   <div id="method-overlay" onclick="closeMethodologyIfOutside(event)">
     <div id="method-modal">
@@ -900,19 +887,9 @@
     map.on('moveend', updateStats);
     map.on('zoomend', updateStats);
 
-    // ── Panel hide/show ─────────────────────────────────────────────────────
-    function hidePanel() {
-      document.getElementById('panel').classList.add('collapsed');
-      const btn = document.getElementById('panel-toggle');
-      btn.style.display = 'flex';
-      // Animate button in
-      btn.style.opacity = '0';
-      setTimeout(() => { btn.style.opacity = '1'; }, 10);
-    }
-
-    function showPanel() {
-      document.getElementById('panel').classList.remove('collapsed');
-      document.getElementById('panel-toggle').style.display = 'none';
+    // ── Panel toggle ────────────────────────────────────────────────────────
+    function togglePanel() {
+      document.getElementById('panel-wrapper').classList.toggle('collapsed');
     }
 
     // ── Methodology modal ───────────────────────────────────────────────────
