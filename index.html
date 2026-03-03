@@ -100,41 +100,37 @@
     }
 
     .method-btn {
-      position: absolute;
-      bottom: -52px;
-      left: 0;
-      width: 100%;
-      background: rgba(8, 10, 18, 0.94);
-      border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      color: var(--text-secondary);
-      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: calc(100% - 36px);
+      margin: 0 18px 16px;
+      background: linear-gradient(135deg, rgba(239,68,68,0.18) 0%, rgba(239,68,68,0.08) 100%);
+      border: 1px solid rgba(239,68,68,0.35);
+      border-radius: 8px;
+      color: #f87171;
+      font-size: 12.5px;
       font-family: var(--font-body);
-      font-weight: 500;
-      padding: 13px 18px;
+      font-weight: 600;
+      padding: 12px 16px;
       cursor: pointer;
       transition: all 0.2s;
       letter-spacing: 0.2px;
-      text-align: left;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 0 0 1px var(--border-subtle), 0 4px 16px rgba(0,0,0,0.5);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      text-align: center;
     }
 
     .method-btn::before {
-      content: '⬡';
-      font-size: 14px;
-      color: var(--accent-red);
-      opacity: 0.8;
+      content: '◈';
+      font-size: 15px;
+      opacity: 0.9;
     }
 
     .method-btn:hover {
-      background: rgba(12, 14, 26, 0.96);
-      color: var(--text-primary);
-      border-color: var(--border-hover);
+      background: linear-gradient(135deg, rgba(239,68,68,0.28) 0%, rgba(239,68,68,0.14) 100%);
+      border-color: rgba(239,68,68,0.6);
+      color: #fca5a5;
+      box-shadow: 0 0 16px rgba(239,68,68,0.15);
     }
 
     .panel-section {
@@ -528,10 +524,13 @@
         </div>
       </div>
     </div>
+    <div class="panel-section" style="padding-top:10px; padding-bottom:14px; border-bottom:none;">
+      <button class="method-btn" onclick="openMethodology()">View Detection Methodology</button>
+    </div>
   </div>
 
-  <!-- Methodology button sits below panel -->
-  <button class="method-btn" onclick="openMethodology()">View Detection Methodology</button> ───────────────────────────────────────────────── -->
+
+
   <div id="method-overlay" onclick="closeMethodologyIfOutside(event)">
     <div id="method-modal">
       <div class="modal-header">
@@ -635,17 +634,43 @@
             tiles: ['https://basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}@2x.png'],
             tileSize: 256,
             attribution: '© CARTO © OpenStreetMap contributors'
+          },
+          // AWS Open Terrain — free, no API key required
+          // Terrarium encoding: R*256 + G + B/256 - 32768 = elevation in meters
+          'terrain-dem': {
+            type: 'raster-dem',
+            tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            maxzoom: 15,
+            encoding: 'terrarium'
           }
         },
         layers: [
           { id: 'satellite', type: 'raster', source: 'esri-satellite',
             paint: { 'raster-brightness-max': 0.55, 'raster-contrast': 0.15, 'raster-saturation': -0.3 } },
           { id: 'labels', type: 'raster', source: 'carto-dark-labels',
-            paint: { 'raster-opacity': 0.85 } }
+            paint: { 'raster-opacity': 0.85 } },
+          // Sky layer — visible when map is pitched, gives atmospheric depth
+          {
+            id: 'sky',
+            type: 'sky',
+            paint: {
+              'sky-type': 'atmosphere',
+              'sky-atmosphere-sun': [0.0, 90.0],
+              'sky-atmosphere-sun-intensity': 15,
+              'sky-atmosphere-color': 'rgba(15, 15, 30, 1)',
+              'sky-atmosphere-halo-color': 'rgba(60, 60, 120, 0.8)',
+              'sky-gradient-center': [0, 0],
+              'sky-gradient-radius': 90,
+              'sky-opacity': 0.85
+            }
+          }
         ]
       },
       center: [-105.78, 40.0],
-      zoom: 9
+      zoom: 9,
+      pitch: 55,      // 3D tilt — 0 = flat top-down, 60 = dramatic angle
+      bearing: -20    // Slight rotation to show mountain ridgelines well
     });
 
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -653,6 +678,11 @@
 
     // ── Layers ──────────────────────────────────────────────────────────────
     map.on('load', () => {
+
+      // ── 3D Terrain ──────────────────────────────────────────────────────
+      map.setTerrain({ source: 'terrain-dem', exaggeration: 1.4 });
+      // exaggeration: 1.0 = true scale, 1.4 = slightly dramatized for readability
+      // Increase to 2.0 for very dramatic relief, decrease to 1.0 for accurate
 
       // Seasonal
       map.addSource('avalanches', { type: 'vector', url: 'pmtiles://all_seasons.pmtiles' });
@@ -663,7 +693,7 @@
         layout: { visibility: 'none' },
         paint: {
           'fill-color': ['case', ['==', ['get', 'confidence'], 'higher confidence'], '#ef4444', '#facc15'],
-          'fill-opacity': ['case', ['==', ['get', 'confidence'], 'higher confidence'], 1.0, 0.7]
+          'fill-opacity': ['case', ['==', ['get', 'confidence'], 'higher confidence'], 1.0, 0.5]
         }
       });
 
@@ -687,7 +717,7 @@
         layout: { visibility: 'visible' },
         paint: {
           'fill-color': ['case', ['==', ['get', 'confidence'], 'higher confidence'], '#ef4444', '#facc15'],
-          'fill-opacity': ['case', ['==', ['get', 'confidence'], 'higher confidence'], 0.85, 0.6]
+          'fill-opacity': ['case', ['==', ['get', 'confidence'], 'higher confidence'], 0.85, 0.5]
         }
       });
 
