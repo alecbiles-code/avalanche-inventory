@@ -1,8 +1,8 @@
 # Colorado Front Range SAR Avalanche Inventory
 
-An end-to-end satellite-derived avalanche detection pipeline for Colorado's Front Range, built entirely on free, cloud-native tools. Three winters of Sentinel-1 C-band SAR data processed through Google Earth Engine, served as an interactive 3D map via PMTiles and MapLibre GL JS.
+This is an end-to-end satellite-derived avalanche detection pipeline for Colorado's Front Range, built entirely on free, cloud-native tools. Three winters of Sentinel-1 C-band SAR data processed through Google Earth Engine, served as an interactive 3D map via PMTiles and MapLibre GL JS.
 
-**[🗺 Live Map -->](https://alecbiles-code.github.io/avalanche-inventory/)**
+**[CLICK HERE TO VIEW WEBMAP](https://alecbiles-code.github.io/avalanche-inventory/)**
 
 ---
 
@@ -14,7 +14,7 @@ Cross-season hotspots highlight terrain that triggered detections in two or more
 
 ---
 
-## Pipeline
+## General Pipeline
 
 ```
 Sentinel-1 GRD (GEE)
@@ -68,7 +68,7 @@ GeoJSON --> GeoParquet --> DuckDB --> PMTiles --> GitHub Pages
 | Spatial analysis | GeoPandas, DuckDB spatial |
 | Tile generation | Tippecanoe --> PMTiles |
 | Visualization | MapLibre GL JS + PMTiles protocol |
-| Hosting | GitHub Pages (zero cost) |
+| Hosting | GitHub Pages |
 
 ---
 
@@ -83,24 +83,12 @@ GeoJSON --> GeoParquet --> DuckDB --> PMTiles --> GitHub Pages
 
 ---
 
-## Map Features
-
-- **3D terrain** with 1.4× exaggeration using AWS Open Terrain DEM
-- **Seasonal layer**  toggle individual winters (2021–22, 2022–23, 2023–24)
-- **Cross-season hotspot layer**  recurring detections across ≥ 2 seasons
-- **Confidence symbology**  red (higher) / yellow (lower), opacity-coded
-- **Viewport statistics**  live event count, area (km²), high confidence %
-- **Collapsible panel**  mobile-friendly sidebar with arrow tab
-- **Methodology modal**  full processing documentation + scientific references
-
----
-
 ## Known Limitations
 
 - **No forest mask applied**  detections in forested areas may include false positives from canopy snow loading/unloading
 - **C-band amplitude only**  coherence-based detection (requires SLC data) would improve accuracy for small or shallow events
-- **12-day revisit**  avalanches that settle and compact between Sentinel-1 passes may not be detected
-- **South-facing aspects retained**  increased false positive risk on sun-exposed slopes due to melt-refreeze cycles
+- **12-day revisit**  avalanches that settle and compact between Sentinel-1 passes problay not be detected
+- **South-facing aspects retained**  increased false positive risk on sun-exposed slopes due to melt/refreeze cycles
 
 ---
 
@@ -122,5 +110,5 @@ Detection results are intended for comparison against the [Colorado Avalanche In
 
 ## Author
 
-**Alec Biles**  Senior Geospatial & Remote Sensing Scientist  
-[LinkedIn](https://www.linkedin.com/in/alecbiles) · [GitHub](https://github.com/alecbiles-code)
+**Alec Biles**  
+[LinkedIn](linkedin.com/in/alec-biles) · [GitHub](https://github.com/alecbiles-code)
